@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "locale": { "type": "string", "enum": ["ar", "en"] },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "referred_by": { "type": "string", "description": "The user ID who referred this user" },
+        "friends_invited": { "type": "number", "description": "Number of friends referred who completed a course" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name"]
+    },
+    "UserProgress": {
+      "title": "User Progress",
+      "description": "Tracks progress of a specific user in a specific lesson",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "craftId": { "type": "string" },
+        "levelId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "status": { "type": "string", "enum": ["not_started", "in_progress", "completed"] },
+        "xpEarned": { "type": "number" },
+        "quizScore": { "type": "number" },
+        "exerciseCompleted": { "type": "boolean" },
+        "visualWatched": { "type": "boolean" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "craftId", "lessonId", "status"]
+    },
+    "UserAchievement": {
+      "title": "User Achievement",
+      "description": "Badges earned by the user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "badgeId": { "type": "string" },
+        "craftId": { "type": "string" },
+        "earnedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "badgeId", "earnedAt"]
+    },
+    "UserXPLog": {
+      "title": "User XP Log",
+      "description": "Record of XP points earned",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "source": { "type": "string", "enum": ["lesson", "quiz", "stage", "streak"] },
+        "sourceId": { "type": "string" },
+        "earnedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "amount", "source", "earnedAt"]
+    },
+    "Portfolio": {
+      "title": "Public Portfolio",
+      "description": "User's public portfolio projects",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "craft_id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "is_public": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "user_id", "craft_id", "title"]
+    },
+    "Review": {
+      "title": "Craft Review",
+      "description": "User's review for a craft",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "craft_id": { "type": "string" },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "user_id", "craft_id", "rating"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile collection"
+    },
+    "/portfolios/{portfolioId}": {
+      "schema": "Portfolio",
+      "description": "Public portfolios"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Craft reviews"
+    },
+    "/users/{userId}/progress/{progressId}": {
+      "schema": "UserProgress",
+      "description": "Detailed lesson progress for each user"
+    },
+    "/users/{userId}/achievements/{achievementId}": {
+      "schema": "UserAchievement",
+      "description": "Badges and achievements earned by the user"
+    },
+    "/users/{userId}/xp_logs/{logId}": {
+      "schema": "UserXPLog",
+      "description": "Log of all XP earnings"
+    }
+  }
+}

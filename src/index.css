@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-dark: var(--dark);
+  --color-bg-sand: var(--bg-sand);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-card: var(--card);
+  --color-border: var(--border);
+
+  --font-sans: 'Tajawal', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    --primary: #C67B4B;
+    --primary-hover: #b56c3e;
+    --secondary: #6B705C;
+    --dark: #2D2D2D;
+    --bg-sand: #F9F6F0;
+    --accent: #3A7B85;
+    --accent-hover: #2e666f;
+    --card: #FFFFFF;
+    --border: #E5DDD3;
+  }
+
+  .dark {
+    --primary: #D4936A;
+    --primary-hover: #C67B4B;
+    --secondary: #B0A99A;
+    --dark: #E8E2D7;
+    --bg-sand: #1E1C1A;
+    --accent: #6BB5C1;
+    --accent-hover: #4a919e;
+    --card: #2A2724;
+    --border: #3D3935;
+  }
+
+  * {
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  body {
+    @apply bg-[var(--color-bg-sand)] text-[var(--color-dark)] font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer utilities {
+  .clip-path-slant {
+    clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+  }
+  .clip-path-slant-rtl {
+    clip-path: polygon(0 0, 90% 0, 100% 100%, 0% 100%);
+  }
+}
+

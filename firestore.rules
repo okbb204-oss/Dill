@@ -1,0 +1,130 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 100 &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 200)) &&
+             (!('xp' in data) || data.xp is number) &&
+             (!('streak' in data) || data.streak is number) &&
+             (!('referred_by' in data) || data.referred_by is string) &&
+             (!('friends_invited' in data) || data.friends_invited is number) &&
+             (!('referral_processed' in data) || data.referral_processed is bool);
+    }
+
+    function isValidUserProgress(data) {
+      return data.keys().hasAll(['userId', 'craftId', 'lessonId', 'status']) &&
+             data.userId == request.auth.uid &&
+             data.status in ['not_started', 'in_progress', 'completed'] &&
+             (!('xpEarned' in data) || data.xpEarned is number);
+    }
+
+    function isValidUserAchievement(data) {
+      return data.keys().hasAll(['userId', 'badgeId', 'earnedAt']) &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidUserXPLog(data) {
+      return data.keys().hasAll(['userId', 'amount', 'source', 'earnedAt']) &&
+             data.userId == request.auth.uid &&
+             data.amount is number;
+    }
+
+    function isValidPortfolio(data) {
+      return data.keys().hasAll(['id', 'user_id', 'craft_id', 'title']) &&
+             data.id is string &&
+             data.user_id == request.auth.uid &&
+             data.craft_id is string && 
+             data.title is string && data.title.size() <= 200 &&
+             (!('description' in data) || data.description is string) &&
+             (!('images' in data) || data.images is list) &&
+             (!('is_public' in data) || data.is_public is bool);
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['id', 'user_id', 'craft_id', 'rating']) &&
+             data.id is string &&
+             data.user_id == request.auth.uid &&
+             data.craft_id is string &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             (!('comment' in data) || data.comment is string) &&
+             (!('tags' in data) || data.tags is list);
+    }
+
+    // --- Collection Matches ---
+
+    match /portfolios/{portfolioId} {
+      allow read: if true;
+      allow create: if isOwner(incoming().user_id) && isValidPortfolio(incoming());
+      allow update: if isOwner(existing().user_id) && isValidPortfolio(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'images', 'is_public', 'craft_id']);
+      allow delete: if isOwner(existing().user_id);
+    }
+
+    match /reviews/{reviewId} {
+      allow list: if true;
+      allow get: if true;
+      allow create: if isOwner(incoming().user_id) && isValidReview(incoming());
+      allow update: if isOwner(existing().user_id) && isValidReview(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'comment', 'tags']);
+      allow delete: if isOwner(existing().user_id);
+    }
+
+    match /users/{userId} {
+      allow get: if true;
+      allow list: if true;
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if (isOwner(userId) || incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'friends_invited', 'referral_processed'])) && isValidUser(incoming());
+      
+      match /progress/{progressId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidUserProgress(incoming());
+        allow update: if isOwner(userId) && isValidUserProgress(incoming()) && 
+                         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'xpEarned', 'quizScore', 'exerciseCompleted', 'visualWatched', 'updatedAt']);
+      }
+      
+      match /achievements/{achievementId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidUserAchievement(incoming());
+      }
+      
+      match /xp_logs/{logId} {
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidUserXPLog(incoming());
+      }
+    }
+  }
+}
